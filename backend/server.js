@@ -40,3 +40,12 @@ async function startServer() {
 }
 
 startServer();
+
+
+// Keep local development working
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(5000, () => console.log("Server running on port 5000"));
+}
+
+// Required for Vercel serverless deployment
+module.exports = app;
