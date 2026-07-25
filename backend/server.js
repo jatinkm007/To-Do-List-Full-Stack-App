@@ -11,13 +11,14 @@ const errorMiddleware = require("./middleware/error.middleware");
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Updated CORS to automatically allow all Vercel preview URLs
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://to-do-list-full-stack-app.vercel.app",
-      process.env.CLIENT_URL
-    ].filter(Boolean), // Removes any undefined values
+      /^https:\/\/to-do-list-full-stack.*\.vercel\.app$/ // Matches any Vercel preview URL for this project
+    ],
     credentials: true
   })
 );
