@@ -26,25 +26,16 @@ app.use("/api/tasks", taskRoutes);
 app.use(errorMiddleware.notFound);
 app.use(errorMiddleware.errorHandler);
 
-async function startServer() {
-  try {
-    await connectDB();
+// Connect to the database
+connectDB().then(() => {
+  console.log("Database connection initialized.");
+}).catch(error => {
+  console.error("Database connection failed:", error.message);
+});
 
-    app.listen(port, function () {
-      console.log("Server running on http://localhost:" + port);
-    });
-  } catch (error) {
-    console.error("Server could not start:", error.message);
-    process.exit(1);
-  }
-}
-
-startServer();
-
-
-// Keep local development working
+// Keep local development working (runs ONLY once)
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(5000, () => console.log("Server running on port 5000"));
+  app.listen(port, () => console.log("Server running on port " + port));
 }
 
 // Required for Vercel serverless deployment
