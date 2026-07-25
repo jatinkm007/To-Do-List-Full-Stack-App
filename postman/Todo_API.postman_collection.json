@@ -1,0 +1,117 @@
+{
+  "info": {
+    "_postman_id": "a642c912-8e47-4b59-8635-3ce409fd6aea",
+    "name": "Todo API - Jatin Task",
+    "description": "CRUD and validation tests for the full-stack To-Do application.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api/tasks" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - API health check",
+      "request": { "method": "GET", "url": "http://localhost:5000/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('API message is returned', function () { pm.expect(pm.response.json().message).to.eql('Todo API is running.'); });"
+      ] } }]
+    },
+    {
+      "name": "02 - Get all tasks",
+      "request": { "method": "GET", "url": "{{baseUrl}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('Tasks is an array', function () { pm.expect(pm.response.json().tasks).to.be.an('array'); });"
+      ] } }]
+    },
+    {
+      "name": "03 - Reject short title",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"A\",\n  \"description\": \"Invalid task\"\n}" },
+        "url": "{{baseUrl}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+        "pm.test('Validation message exists', function () { pm.expect(pm.response.json().message).to.include('at least 2'); });"
+      ] } }]
+    },
+    {
+      "name": "04 - Create task",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman test task\",\n  \"description\": \"Created by the Postman collection\"\n}" },
+        "url": "{{baseUrl}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+        "pm.test('Created task has an id', function () { var data = pm.response.json(); pm.expect(data.task._id).to.exist; pm.collectionVariables.set('taskId', data.task._id); });"
+      ] } }]
+    },
+    {
+      "name": "05 - Search task",
+      "request": { "method": "GET", "url": "{{baseUrl}}?search=Postman" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('Search returns an array', function () { pm.expect(pm.response.json().tasks).to.be.an('array'); });"
+      ] } }]
+    },
+    {
+      "name": "06 - Update task",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Postman task\",\n  \"description\": \"The update endpoint works\"\n}" },
+        "url": "{{baseUrl}}/{{taskId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('Title was updated', function () { pm.expect(pm.response.json().task.title).to.eql('Updated Postman task'); });"
+      ] } }]
+    },
+    {
+      "name": "07 - Complete task",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"completed\": true\n}" },
+        "url": "{{baseUrl}}/{{taskId}}/status"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('Task is completed', function () { pm.expect(pm.response.json().task.completed).to.eql(true); });"
+      ] } }]
+    },
+    {
+      "name": "08 - Reject invalid ObjectId",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/not-a-valid-id"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+        "pm.test('Invalid id message exists', function () { pm.expect(pm.response.json().message).to.include('Invalid task id'); });"
+      ] } }]
+    },
+    {
+      "name": "09 - Delete task",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/{{taskId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "pm.test('Delete message exists', function () { pm.expect(pm.response.json().message).to.include('deleted'); });"
+      ] } }]
+    },
+    {
+      "name": "10 - Deleted task is not found",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/{{taskId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+        "pm.test('Not found message exists', function () { pm.expect(pm.response.json().message).to.eql('Task not found.'); });"
+      ] } }]
+    }
+  ]
+}
