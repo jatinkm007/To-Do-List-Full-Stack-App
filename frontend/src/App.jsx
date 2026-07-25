@@ -6,6 +6,7 @@ import {
   toggleTaskStatus,
   removeTask
 } from "./api/taskApi";
+import { Analytics } from "@vercel/analytics/react";
 
 import "./App.css";
 
@@ -127,6 +128,7 @@ async function loadTasks(searchValue = "") {
 
   return (
     <div className="page">
+      <Analytics />
       <div className="todo-box">
         <h1>To-Do List App</h1>
         <p className="sub-heading">
