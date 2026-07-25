@@ -2,6 +2,8 @@
 
 A simple CRUD To-Do application built with React, Express, Node.js and MongoDB. The frontend sends HTTP requests with Axios, while the backend stores tasks in MongoDB through Mongoose.
 
+## Live Preview - (*https://to-do-list-full-stack-app.vercel.app/*)
+
 ## Features
 
 - Create a task with a title and optional description
