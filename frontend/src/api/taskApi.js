@@ -7,7 +7,8 @@ if (!API_URL) {
 }
 
 const api = axios.create({
-  baseURL: API_URL,
+  // Dynamically append the endpoint path to the base URL
+  baseURL: `${API_URL}/api/tasks`, 
   timeout: 10000
 });
 
