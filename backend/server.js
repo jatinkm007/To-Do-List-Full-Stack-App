@@ -13,11 +13,15 @@ const port = process.env.PORT || 5000;
 
 app.use(
   cors({
-    // Make sure you add CLIENT_URL to your Render Environment Variables 
-    // and set it to your deployed Vercel frontend URL
-    origin: process.env.CLIENT_URL || "http://localhost:5173"
+    origin: [
+      "http://localhost:5173",
+      "https://to-do-list-full-stack-app.vercel.app",
+      process.env.CLIENT_URL
+    ].filter(Boolean), // Removes any undefined values
+    credentials: true
   })
 );
+
 app.use(express.json());
 
 app.get("/", function (req, res) {
