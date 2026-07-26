@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
-import { fetchTasks, addTask, toggleTaskStatus, removeTask } from "./api/taskApi";
+
 
 // Importing the previously unused components
-import TaskForm from "./TaskForm";
-import TaskList from "./TaskList";
+import TaskForm from "./components/TaskForm";
+import TaskList from "./components/TaskList";
+import {
+  fetchTasks,
+  addTask,
+  editTask,
+  toggleTaskStatus,
+  removeTask
+} from "./api/taskApi";
+import { Analytics } from "@vercel/analytics/react";
 
 import "./App.css";
 
@@ -98,6 +106,7 @@ function App() {
 
   return (
     <div className="page">
+      <Analytics />
       <div className="todo-box">
         <h1>To-Do List App</h1>
         <p className="sub-heading">
