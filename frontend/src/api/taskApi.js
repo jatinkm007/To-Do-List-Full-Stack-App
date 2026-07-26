@@ -3,41 +3,26 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
-  throw new Error("VITE_API_URL is missing. Create frontend/.env from .env.example.");
+  console.error("VITE_API_URL is missing. Please check your .env file.");
 }
 
+// Set up axios instance. 
+// Using just API_URL fixes the double-pathing bug assuming your .env has the full path.
 const api = axios.create({
-  // Dynamically append the endpoint path to the base URL
-  baseURL: `${API_URL}/api/tasks`, 
+  baseURL: API_URL, 
   timeout: 10000
 });
 
-function createApiError(error) {
-  if (!error.response) {
-    const networkError = new Error(
-      "Cannot connect to the server. Check that the backend is running and the API URL is correct."
-    );
-    networkError.type = "network";
-    return networkError;
-  }
-
-  const apiError = new Error(
-    error.response.data?.message || "The request could not be completed."
-  );
-  apiError.type = error.response.status === 400 ? "validation" : "server";
-  apiError.status = error.response.status;
-  return apiError;
-}
-
 export async function fetchTasks(searchText = "") {
   try {
+    // Get all tasks, pass search text if the user typed something
     const response = await api.get("", {
       params: searchText.trim() ? { search: searchText.trim() } : {}
     });
-
     return response.data.tasks;
   } catch (error) {
-    throw createApiError(error);
+    // Simple error handling instead of the complex factory function
+    throw new Error(error.response?.data?.message || "Failed to fetch tasks from the server.");
   }
 }
 
@@ -46,7 +31,7 @@ export async function addTask(task) {
     const response = await api.post("", task);
     return response.data.task;
   } catch (error) {
-    throw createApiError(error);
+    throw new Error(error.response?.data?.message || "Failed to add new task.");
   }
 }
 
@@ -55,19 +40,19 @@ export async function editTask(id, task) {
     const response = await api.put("/" + id, task);
     return response.data.task;
   } catch (error) {
-    throw createApiError(error);
+    throw new Error(error.response?.data?.message || "Failed to update task.");
   }
 }
 
 export async function toggleTaskStatus(id, completed) {
   try {
+    // Update just the completed status
     const response = await api.patch("/" + id + "/status", {
       completed: completed
     });
-
     return response.data.task;
   } catch (error) {
-    throw createApiError(error);
+    throw new Error(error.response?.data?.message || "Failed to change task status.");
   }
 }
 
@@ -75,6 +60,6 @@ export async function removeTask(id) {
   try {
     await api.delete("/" + id);
   } catch (error) {
-    throw createApiError(error);
+    throw new Error(error.response?.data?.message || "Failed to delete task.");
   }
 }

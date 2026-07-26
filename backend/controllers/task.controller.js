@@ -1,156 +1,120 @@
-const mongoose = require("mongoose");
-const taskService = require("../services/task.service");
+const Task = require("../models/task.model");
 
-function validTaskId(id) {
-  return mongoose.Types.ObjectId.isValid(id);
-}
-
-function cleanText(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-async function getTasks(req, res, next) {
+// Get all tasks from database
+async function getTasks(req, res) {
   try {
-    const search = cleanText(req.query.search);
-    const tasks = await taskService.getAllTasks(search);
+    const search = req.query.search;
+    let filter = {};
 
-    res.status(200).json({
-      success: true,
-      count: tasks.length,
-      tasks: tasks
-    });
+    // If user typed in the search box, look in title or description
+    if (search) {
+      filter = {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } }
+        ]
+      };
+    }
+
+    // Fetch tasks and sort newest first
+    const tasks = await Task.find(filter).sort({ createdAt: -1 });
+    
+    // Return standard JSON matching the frontend expectation
+    res.status(200).json({ tasks: tasks });
   } catch (error) {
-    next(error);
+    console.log("Error fetching tasks:", error);
+    res.status(500).json({ message: "Server error while getting tasks." });
   }
 }
 
-async function createTask(req, res, next) {
+// Add a new task
+async function createTask(req, res) {
   try {
-    const title = cleanText(req.body.title);
-    const description = cleanText(req.body.description);
+    const { title, description } = req.body;
 
-    if (title.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Title must contain at least 2 characters."
-      });
+    // Basic human-readable validation
+    if (!title || title.length < 2) {
+      return res.status(400).json({ message: "Title must be at least 2 characters long." });
     }
 
-    const task = await taskService.createTask(title, description);
-
-    res.status(201).json({
-      success: true,
-      message: "Task created successfully.",
-      task: task
+    const newTask = await Task.create({
+      title: title,
+      description: description || "" // default to empty string if undefined
     });
+
+    res.status(201).json({ task: newTask });
   } catch (error) {
-    next(error);
+    console.log(error);
+    res.status(500).json({ message: "Could not create the task." });
   }
 }
 
-async function updateTask(req, res, next) {
+// Edit a task's title and description
+async function updateTask(req, res) {
   try {
-    const id = req.params.id;
+    const taskId = req.params.id;
+    const { title, description } = req.body;
 
-    if (!validTaskId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id format."
-      });
+    if (!title || title.length < 2) {
+      return res.status(400).json({ message: "Title must be at least 2 characters long." });
     }
 
-    const title = cleanText(req.body.title);
-    const description = cleanText(req.body.description);
+    // findByIdAndUpdate is much simpler for beginners to use
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { title: title, description: description },
+      { new: true } // This tells Mongoose to return the updated object, not the old one
+    );
 
-    if (title.length < 2) {
-      return res.status(400).json({
-        success: false,
-        message: "Title must contain at least 2 characters."
-      });
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Task not found." });
     }
 
-    const task = await taskService.updateTask(id, title, description);
-
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found."
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Task updated successfully.",
-      task: task
-    });
+    res.status(200).json({ task: updatedTask });
   } catch (error) {
-    next(error);
+    console.log(error);
+    res.status(500).json({ message: "Error updating the task." });
   }
 }
 
-async function updateTaskStatus(req, res, next) {
+// Flip the completed status
+async function updateTaskStatus(req, res) {
   try {
-    const id = req.params.id;
+    const taskId = req.params.id;
+    
+    // We only care about the completed boolean here
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { completed: req.body.completed },
+      { new: true }
+    );
 
-    if (!validTaskId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id format."
-      });
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Task not found." });
     }
 
-    if (typeof req.body.completed !== "boolean") {
-      return res.status(400).json({
-        success: false,
-        message: "Completed must be true or false."
-      });
-    }
-
-    const task = await taskService.updateStatus(id, req.body.completed);
-
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found."
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Task status updated successfully.",
-      task: task
-    });
+    res.status(200).json({ task: updatedTask });
   } catch (error) {
-    next(error);
+    console.log(error);
+    res.status(500).json({ message: "Error updating task status." });
   }
 }
 
-async function deleteTask(req, res, next) {
+// Delete task from DB
+async function deleteTask(req, res) {
   try {
-    const id = req.params.id;
+    const taskId = req.params.id;
+    
+    const deletedTask = await Task.findByIdAndDelete(taskId);
 
-    if (!validTaskId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid task id format."
-      });
+    if (!deletedTask) {
+      return res.status(404).json({ message: "Task not found." });
     }
 
-    const task = await taskService.deleteTask(id);
-
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found."
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Task deleted successfully."
-    });
+    res.status(200).json({ message: "Task successfully deleted." });
   } catch (error) {
-    next(error);
+    console.log(error);
+    res.status(500).json({ message: "Error deleting task." });
   }
 }
 

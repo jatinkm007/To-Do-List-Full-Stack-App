@@ -4,24 +4,21 @@ const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "Task title is required"],
-      trim: true,
-      minlength: [2, "Title should have at least 2 characters"]
+      required: true, // simplified from array formatting
+      trim: true
     },
-
     description: {
       type: String,
       trim: true,
       default: ""
     },
-
     completed: {
       type: Boolean,
       default: false
     }
   },
   {
-    timestamps: true
+    timestamps: true // Automatically gives us createdAt and updatedAt
   }
 );
 
